@@ -1,5 +1,5 @@
 import sys
-import os
+import optparse
 try:
     import dpkt
 except:
@@ -7,8 +7,10 @@ except:
 from struct import *
 from ctypes    import *
 
-nt = windll.ntdll
-
+try:
+    nt = windll.ntdll
+except:
+    print "you must be running windows to use windows ntdll..."
 
 def decrypt(key, src, size):
     
@@ -79,9 +81,28 @@ def decrypt_packed_string(src):
 
 
 def decode_cc(flags):
-    GET_MACHINE_INFO_FLAG = 0x1
+    #TODO these probably need work
+    GET_MACHINE_INFO_FLAG = 0x1 #returns machine name and identifier
+    START_PLUGIN_MGR_FLAG = 0x3 #select and enable plugins
+    INSTALL_NEW_COPY_FLAG = 0x5 #install itself again
+    SEND_NEW_SETTINGS_FLAG = 0x6 #send bot new settings
+    SAVE_SETTINGS_TO_FILE_FLAG = 0x7 #save current settings to file
+    SEND_PLUGINS_INFO_FLAG = 0x8 #send C&C info about plugins
+    #FLAG_NAME_HERE_FLAG = 0xFLAG
     if flags & GET_MACHINE_INFO_FLAG:
         return hex(flags) + " (GetMachineInfo)"
+    elif flags & START_PLUGIN_MGR_FLAG:
+        return hex(flags) + " (StartPluginManager)"
+    elif flags & INSTALL_NEW_COPY_FLAG:
+        return hex(flags) + " (InstallNewCopy)"
+    elif flags & SEND_NEW_SETTINGS_FLAG:
+        return hex(flags) + " (SendNewSettings)"
+    elif flags & SAVE_SETTINGS_TO_FILE_FLAG:
+        return hex(flags) + " (SaveSettingsToFile)"
+    elif flags & SEND_PLUGINS_INFO_FLAG:
+        return hex(flags) + " (SendPluginsInfo)"
+    #elif flags & FLAG_NAME_HERE:
+    #    return "%s (flag_name_here)" % (hex(flags)) 
     else:
         return hex(flags)
 
@@ -160,12 +181,39 @@ def output_results(extracted, flags, o_fname = None):
         with open(o_fname, "ab") as output:
             output.write(extracted)
 
-inp1 = raw_input()
-#inp2 = inp1 + ".decoded"
+parser = optparse.OptionParser()
+parser.add_option(
+    '-f',
+    '--file',
+    metavar = 'FILE',
+    dest = 'in_file',
+    help = 'read from a data file (extracted tcp data stream, or other artifact such as file stored on disk)')
+parser.add_option(
+    '-p',
+    '--pcap',
+    metavar = 'FILE',
+    dest = 'pcap_file',
+    help = 'read from a pcap file')
+parser.add_option(
+    '-o',
+    '--output-file',
+    default = None,
+    metavar = 'FILE',
+    dest = 'out_file',
+    help = 'write out to a file (usually most useful for decrypting artifacts or extracted tcp data streams)')
 
+(opts, args) = parser.parse_args()
+if opts.pcap_file and opts.in_file:
+    parser.error("options -p and -f are mutually exclusive")
+
+if opts.pcap_file:
+    pcap_read_and_extract(opts.pcap_file)
+elif opts.in_file:
+    decrypt_data_to_new_file(i_fname = opts.in_file, o_fname = opts.out_file)
+else:
+    parser.error("you must specify a file with -p or -f")
+    
 #if you extract tcpdata streams to files:
-#decrypt_data_to_new_file(i_fname = inp1, o_fname = inp2)
 
 #this one isn't stream-aware (TODO), but it does take pcaps,
 #outputs to stdout
-pcap_read_and_extract(inp1)
