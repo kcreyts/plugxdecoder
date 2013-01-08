@@ -200,7 +200,7 @@ parser.add_option(
     default = None,
     metavar = 'FILE',
     dest = 'out_file',
-    help = 'write out to a file (usually most useful for decrypting artifacts or extracted tcp data streams)')
+    help = 'write out to a file (usually most useful for decrypting artifacts or extracted tcp data streams) otherwise, writes to stdout')
 
 (opts, args) = parser.parse_args()
 if opts.pcap_file and opts.in_file:
@@ -212,8 +212,3 @@ elif opts.in_file:
     decrypt_data_to_new_file(i_fname = opts.in_file, o_fname = opts.out_file)
 else:
     parser.error("you must specify a file with -p or -f")
-    
-#if you extract tcpdata streams to files:
-
-#this one isn't stream-aware (TODO), but it does take pcaps,
-#outputs to stdout
