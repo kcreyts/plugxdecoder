@@ -89,19 +89,19 @@ def decode_cc(flags):
     SAVE_SETTINGS_TO_FILE_FLAG = 0x7 #save current settings to file
     SEND_PLUGINS_INFO_FLAG = 0x8 #send C&C info about plugins
     #FLAG_NAME_HERE_FLAG = 0xFLAG
-    if flags & GET_MACHINE_INFO_FLAG:
-        return hex(flags) + " (GetMachineInfo)"
-    elif flags & START_PLUGIN_MGR_FLAG:
-        return hex(flags) + " (StartPluginManager)"
-    elif flags & INSTALL_NEW_COPY_FLAG:
-        return hex(flags) + " (InstallNewCopy)"
-    elif flags & SEND_NEW_SETTINGS_FLAG:
-        return hex(flags) + " (SendNewSettings)"
-    elif flags & SAVE_SETTINGS_TO_FILE_FLAG:
-        return hex(flags) + " (SaveSettingsToFile)"
-    elif flags & SEND_PLUGINS_INFO_FLAG:
-        return hex(flags) + " (SendPluginsInfo)"
-    #elif flags & FLAG_NAME_HERE:
+    if flags == GET_MACHINE_INFO_FLAG:
+        return "%s (GetMachineInfo)" % (hex(flags))
+    elif flags == START_PLUGIN_MGR_FLAG:
+        return "%s (StartPluginManager)" % (hex(flags))
+    elif flags == INSTALL_NEW_COPY_FLAG:
+        return "%s (InstallNewCopy)" % (hex(flags))
+    elif flags == SEND_NEW_SETTINGS_FLAG:
+        return "%s (SendNewSettings)" % (hex(flags))
+    elif flags == SAVE_SETTINGS_TO_FILE_FLAG:
+        return "%s (SaveSettingsToFile)" % (hex(flags))
+    elif flags == SEND_PLUGINS_INFO_FLAG:
+        return "%s (SendPluginsInfo)" % (hex(flags))
+    #elif flags == FLAG_NAME_HERE:
     #    return "%s (flag_name_here)" % (hex(flags)) 
     else:
         return hex(flags)
