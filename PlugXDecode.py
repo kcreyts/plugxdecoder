@@ -65,19 +65,23 @@ def decrypt_packed_string(src):
         compressed = create_string_buffer(stage1[16:])
         uncompressed = create_string_buffer(0xFFFF)
         final_size = c_ulong(0)
-        comp_size = unpack("<H", stage1[8:10])[0]
-        uncomp_size = unpack("<H", stage1[10:12])[0]
+        comp_size = unpack("!H", stage1[8:10])[0]
+        if comp_size != (len(stage1)-16):
+            return stage1, flags
+        uncomp_size = unpack("!H", stage1[10:12])[0]
         
-        nt.RtlDecompressBuffer(
+        if nt.RtlDecompressBuffer(
                      2,                # COMPRESSION_FORMAT_LZNT1
                      uncompressed,     # UncompressedBuffer
                      uncomp_size,      # UncompressedBufferSize
                      compressed,       # CompressedBuffer
                      comp_size,        # CompressedBufferSize
                      byref(final_size) # FinalUncompressedSize
-                     )
-        
-        return stage1[0:16] + uncompressed[0:final_size.value], flags
+                     ):
+            return stage1[0:16] + uncompressed[0:final_size.value], flags
+        else:
+            print "this could not be decompressed"
+            return stage1,flags
 
 
 def decode_cc(flags):
@@ -110,7 +114,8 @@ def decode_cc(flags):
 def pcap_read_and_extract(i_fname):
     
     pcap = dpkt.pcap.Reader(open(i_fname,"rb"))
-    output_tcpdata= []
+    output_data = []
+    header_stripper = []
     for ts, buf in pcap:
         eth = dpkt.ethernet.Ethernet(buf)
         #we only care about IP packets for now
@@ -118,25 +123,52 @@ def pcap_read_and_extract(i_fname):
             continue
         ip = eth.data
         #example implements TCP data reading only
-        if ip.p != 6:
-            continue
-        tcp = ip.data
-        
-        try:
-            #we only care about SYNs
-            if (tcp.flags & 0x18):
-                data = tcp.data
-                output_tcpdata.append([
-                                       decrypt_packed_string(data),
-                                       ip.src,
-                                       tcp.sport,
-                                       ip.dst,
-                                       tcp.dport])
-            else:
+        if ip.p = 6:
+
+            tcp = ip.data
+            
+            try:
+                #we only care about SYNs
+                if (tcp.flags & 0x18):
+                    data = tcp.data
+                    output_data.append([
+                                           decrypt_packed_string(data),
+                                           ip.src,
+                                           tcp.sport,
+                                           ip.dst,
+                                           tcp.dport])
+                else:
+                    continue
+            except:
                 continue
-        except:
+#        elif ip.p = 17:
+#            udp = ip.data
+#            data = udp.data
+#            cc_op = data[0:2]
+#            uk1 = data[2:4]
+#            uk2 = data[4:6]
+#            uk3 = data[6:8]
+#            uk4 = data[8:12]
+#            try: 
+#                key = data[12:14]
+#                plugin = data[14:16]
+#                print bin(key)
+#                print bin(plugin)
+#            except:
+#                print data[12:14]
+#                print data[13]
+#                print len(data)-13 
+#
+#            output_data.append([
+#                            decrypt_packed_string(data),
+#                            ip.src,
+#                            udp.sport,
+#                            ip.dst,
+#                            udp.dport])
+#
+        else:
             continue
-    for each in output_tcpdata:
+    for each in output_data:
         [(extracted, flags),
          s_ip,
          s_port,
