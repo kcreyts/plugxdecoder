@@ -2,23 +2,25 @@ import sys
 import optparse
 import logging
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+
+from struct import *
+from ctypes import *
+
 try:
     import dpkt
 except:
-    print "please install dpkt to analyze pcaps"
+    logging.error("please install dpkt to analyze pcaps")
     sys.exit()
-
-from struct import *
-from ctypes    import *
 
 try:
     nt = windll.ntdll
 except:
-    print "you must be running windows to use windows ntdll..."
+    logging.error("you must be running windows to use windows ntdll...")
     sys.exit()
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+
 
 def decrypt(key, src, size):
     key0 = key
@@ -83,7 +85,7 @@ def decrypt_packed_string(src):
                      ):
             return stage1[0:16] + uncompressed[0:final_size.value], flags
         else:
-            logging.warn("This packet could not be decrypted")
+            logging.warn("This payload could not be decompressed")
             return stage1,flags
 
 
