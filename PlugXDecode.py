@@ -1,9 +1,13 @@
 import sys
 import optparse
+import logging
+
 try:
     import dpkt
 except:
     print "please install dpkt to analyze pcaps"
+    sys.exit()
+
 from struct import *
 from ctypes    import *
 
@@ -11,9 +15,12 @@ try:
     nt = windll.ntdll
 except:
     print "you must be running windows to use windows ntdll..."
+    sys.exit()
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
 def decrypt(key, src, size):
-    
     key0 = key
     key1 = key
     key2 = key
@@ -33,25 +40,21 @@ def decrypt(key, src, size):
     
     return dst
 
-
 def read_file_to_decrypt(i_fname):
-    
     with open(i_fname, "rb") as input:
         src = input.read()
         
         return decrypt_packed_string(src)
 
-
 def decrypt_packed_string(src):
-
     key = unpack("<I", src[0:4])[0]
     size = 16
-    print "decrypting with key:", key, hex(key)
+    logging.info("decrypting with key %s:%s" % (key, hex(key))
     
     stage1 = decrypt(key, src, size)
     
     flags = unpack("<I", stage1[4:8])[0]
-    print decode_cc(flags)
+    print decode_cc(flags) #XXX - use logging? 
     
     #not entirely sure handled correctly when this flag set, works when it isn't
     if flags & 0x2000000:      #do not decrypt payload separately
@@ -80,7 +83,7 @@ def decrypt_packed_string(src):
                      ):
             return stage1[0:16] + uncompressed[0:final_size.value], flags
         else:
-            print "this could not be decompressed"
+            logging.warn("This packet could not be decrypted")
             return stage1,flags
 
 
@@ -112,7 +115,6 @@ def decode_cc(flags):
 
 
 def pcap_read_and_extract(i_fname):
-    
     pcap = dpkt.pcap.Reader(open(i_fname,"rb"))
     output_data = []
     header_stripper = []
@@ -181,16 +183,14 @@ def pcap_read_and_extract(i_fname):
                            d_port)
         output_results(extracted, flags)
 
-
 def decrypt_data_to_new_file(i_fname = None, o_fname = None):
-
     extracted, flags = read_file_to_decrypt(i_fname)
     output_results(extracted, flags, o_fname)
-
 
 def output_results(extracted, flags, o_fname = None):
     payload = extracted[16:]
     ##not sure if this is handled right when this flag is set
+    #XXX: Use logging factory? 
     if flags & 0x2000000:
         payload = extracted
         str1 = "flags: %s\npayload:%s" % (decode_cc(flags),
@@ -213,34 +213,36 @@ def output_results(extracted, flags, o_fname = None):
         with open(o_fname, "ab") as output:
             output.write(extracted)
 
-parser = optparse.OptionParser()
-parser.add_option(
-    '-f',
-    '--file',
-    metavar = 'FILE',
-    dest = 'in_file',
-    help = 'read from a data file (extracted tcp data stream, or other artifact such as file stored on disk)')
-parser.add_option(
-    '-p',
-    '--pcap',
-    metavar = 'FILE',
-    dest = 'pcap_file',
-    help = 'read from a pcap file')
-parser.add_option(
-    '-o',
-    '--output-file',
-    default = None,
-    metavar = 'FILE',
-    dest = 'out_file',
-    help = 'write out to a file (usually most useful for decrypting artifacts or extracted tcp data streams) otherwise, writes to stdout')
+if __name__ == '__main__':
+    parser = optparse.OptionParser()
+    parser.add_option(
+        '-f',
+        '--file',
+        metavar = 'FILE',
+        dest = 'in_file',
+        help = 'read from a data file (extracted tcp data stream, or other artifact such as file stored on disk)')
+    parser.add_option(
+        '-p',
+        '--pcap',
+        metavar = 'FILE',
+        dest = 'pcap_file',
+        help = 'read from a pcap file')
+    parser.add_option(
+        '-o',
+        '--output-file',
+        default = None,
+        metavar = 'FILE',
+        dest = 'out_file',
+        help = 'write out to a file (usually most useful for decrypting artifacts or extracted tcp data streams) otherwise, writes to stdout')
+    
+    (opts, args) = parser.parse_args()
+    if opts.pcap_file and opts.in_file:
+        parser.error("options -p and -f are mutually exclusive")
+        return False
 
-(opts, args) = parser.parse_args()
-if opts.pcap_file and opts.in_file:
-    parser.error("options -p and -f are mutually exclusive")
-
-if opts.pcap_file:
-    pcap_read_and_extract(opts.pcap_file)
-elif opts.in_file:
-    decrypt_data_to_new_file(i_fname = opts.in_file, o_fname = opts.out_file)
-else:
-    parser.error("you must specify a file with -p or -f")
+    if opts.pcap_file:
+        pcap_read_and_extract(opts.pcap_file)
+    elif opts.in_file:
+        decrypt_data_to_new_file(i_fname = opts.in_file, o_fname = opts.out_file)
+    else:
+        parser.error("you must specify a file with -p or -f")
