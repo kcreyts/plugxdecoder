@@ -51,7 +51,7 @@ def read_file_to_decrypt(i_fname):
 def decrypt_packed_string(src):
     key = unpack("<I", src[0:4])[0]
     size = 16
-    logging.info("decrypting with key %s:%s" % (key, hex(key))
+    logging.info("decrypting with key %s:%s" % (key, hex(key)))
     
     stage1 = decrypt(key, src, size)
     
@@ -127,7 +127,7 @@ def pcap_read_and_extract(i_fname):
             continue
         ip = eth.data
         #example implements TCP data reading only
-        if ip.p = 6:
+        if ip.p == 6:
 
             tcp = ip.data
             
