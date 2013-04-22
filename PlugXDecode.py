@@ -240,7 +240,6 @@ if __name__ == '__main__':
     (opts, args) = parser.parse_args()
     if opts.pcap_file and opts.in_file:
         parser.error("options -p and -f are mutually exclusive")
-        return False
 
     if opts.pcap_file:
         pcap_read_and_extract(opts.pcap_file)
