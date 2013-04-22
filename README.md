@@ -8,7 +8,7 @@ Accepting pull requests from those who wish to contribute.
 
 Currently requires:
 CTypes (with ntdll), 
-dpkt (http://code.google.com/dpkt)
+dpkt (http://code.google.com/p/dpkt)
 
 Tested with Python 2.7, on Windows.
 
