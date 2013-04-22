@@ -178,10 +178,11 @@ def pcap_read_and_extract(i_fname):
          s_port,
          d_ip,
          d_port] = each
+        ##If the addresses you see are wrong, this is why.
         print "\nsource: %s:%s, destination: %s:%s" % (
-                           ".".join(map(lambda n: str(unpack("<I", s_ip)[0]>>n & 0xFF), [24,16,8,0])),
+                           ".".join(map(lambda n: str(unpack("<I", s_ip)[0]>>n & 0xFF), [0,8,16,24])),
                            s_port,
-                           ".".join(map(lambda n: str(unpack("<I", d_ip)[0]>>n & 0xFF), [24,16,8,0])),
+                           ".".join(map(lambda n: str(unpack("<I", d_ip)[0]>>n & 0xFF), [0,8,16,24])),
                            d_port)
         output_results(extracted, flags)
 
