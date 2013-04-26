@@ -20,6 +20,61 @@ except:
     logging.error("you must be running windows to use windows ntdll...")
     sys.exit()
 
+global the_flags
+#TODO these probably need work
+the_flags = {
+        0x0    : "WAITING_FOR_COMMAND?",
+        0x1    : "GET_MACHINE_INFO_FLAG",           #returns machine name and identifier
+        0x2    : "CHANGE_LEVEL_FLAG",
+        0x3    : "START_PLUGIN_MGR_FLAG",           #select and enable plugins
+        0x5    : "INSTALL_NEW_COPY_FLAG",           #install itself again
+        0x6    : "SEND_NEW_SETTINGS_FLAG",          #send bot new settings
+        0x7    : "SAVE_SETTINGS_TO_FILE_FLAG",      #save current settings to file
+        0x8    : "SEND_PLUGINS_INFO_FLAG",          #send C&C info about plugins
+        0x2000 : "LOCK_WORKSTATION_FLAG",
+        0x2001 : "LOGOFF_FLAG",
+        0x2002 : "SYSTEM_REBOOT_FLAG",
+        0x2003 : "SYSTEM_SHUTDOWN_FLAG",
+        0x2005 : "MESSAGE_BOX_FLAG",
+        0x3000 : "GET_ATTACHED_DISKS_FLAG",
+        0x3001 : "SEARCH_DIR_FOR_FILES_FLAG",
+        0x3002 : "SEARCH_DIR_RECURSING_FLAG",
+        0x3004 : "READ_FILE_NAME_FLAG",
+        0x3005 : "READ_FILE_DATA_FLAG",
+        0x3007 : "WRITE_FILE_NAME_FLAG",
+        0x3008 : "WRITE_FILE_DATA_FLAG",
+        0x300A : "CREATE_DIRECTORY_FLAG",
+        0x300C : "CREATE_DESKTOP_EXEC_FILE_FLAG",
+        0x300D : "DO_FILE_OPERATION_FLAG",
+        0x300E : "GET_ENV_STRINGS_FLAG",
+        0x4000 : "SCREEN_START_CAP_THREAD_FLAG",
+        0x4100 : "SCREEN_CAPTURE_FLAG",
+        0x4101 : "SCREEN_CAPTURE_FRAME_FLAG",
+        0x5000 : "ENUM_RUNNING_PROCS_FLAG",
+        0x5001 : "ENUM_RUNNING_PROC_MODULES_FLAG",
+        0x5002 : "KILL_PROCESS_FLAG",
+        0x6000 : "ENUM_SERVICES_FLAG",
+        0x7002 : "START_SHELL_FLAG",
+        0x7003 : "SHELL_INTERACT_FLAG",
+        0x7100 : "START_TELNET_FLAG",
+        0x7104 : "TELNET_INTERACT_FLAG",
+        0x9000 : "REG_ENUM_KEY_FLAG",
+        0x9001 : "REG_OPEN_KEY_FLAG",
+        0x9002 : "REG_DEL_KEY_FLAG",
+        0x9003 : "REG_CREATE_KEY_FLAG",
+        0x9004 : "REG_ENUM_KEY_VALUE_FLAG",
+        0x9005 : "REG_CREATE_KEY_WITH_VALUE_FLAG",
+        0x9006 : "REG_DEL_VALUE_FLAG",
+        0x9007 : "REG_GET_OR_CREATE_VALUE_FLAG",
+        0xA000 : "NETHOOD_FLAG",
+        0xB000 : "UNKNOWN_FLAG",
+        0xC000 : "SQL_FLAG",
+        0xD000 : "TCPSTATE_FLAG",
+        0xD001 : "UDPSTATE_FLAG",
+        0xD002 : "ADD_TCPSTATE_FLAG",
+        0xE000 : "KEYLOGGER_FLAG",
+}
+
 
 
 def decrypt(key, src, size):
@@ -59,12 +114,12 @@ def decrypt_packed_string(src):
     print decode_cc(flags) #XXX - use logging? 
     
     #not entirely sure handled correctly when this flag set, works when it isn't
-    if flags & 0x2000000:      #do not decrypt payload separately
+    if flags & 0x20000000:      #do not decrypt payload separately
         stage1 = decrypt(key, src, len(src))
     else:
         stage1 = stage1 + decrypt(key, src[16:], len(src[16:]))
     
-    if flags & 0x1000000:      #do not decompress payload
+    if flags & 0x10000000:      #do not decompress payload
         return stage1, flags
     else:
         compressed = create_string_buffer(stage1[16:])
@@ -90,61 +145,8 @@ def decrypt_packed_string(src):
 
 
 def decode_cc(flags):
-    #TODO these probably need work
-    the_flags = {
-        0x1    : "GET_MACHINE_INFO_FLAG",           #returns machine name and identifier
-        0x3    : "START_PLUGIN_MGR_FLAG",           #select and enable plugins
-        0x5    : "INSTALL_NEW_COPY_FLAG",           #install itself again
-        0x6    : "SEND_NEW_SETTINGS_FLAG",          #send bot new settings
-        0x7    : "SAVE_SETTINGS_TO_FILE_FLAG",      #save current settings to file
-        0x8    : "SEND_PLUGINS_INFO_FLAG",          #send C&C info about plugins
-        0x2000 : "LOCK_WORKSTATION_FLAG",
-        0x2001 : "LOGOFF_FLAG",
-        0x2002 : "SYSTEM_REBOOT_FLAG",
-        0x2003 : "SYSTEM_SHUTDOWN_FLAG",
-        0x2005 : "MESSAGE_BOX_FLAG",
-        0x3000 : "GET_ATTACHED_DISKS_FLAG",
-        0x3001 : "SEARCH_DIR_FOR_FILES_FLAG",
-        0x3002 : "SEARCH_DIR_RECURSING_FLAG",
-        0x3004 : "READ_FILE_FLAG",
-        0x3007 : "WRITE_FILE_FLAG",
-        0x300A : "CREATE_DIRECTORY_FLAG",
-        0x300C : "CREATE_DESKTOP_EXEC_FILE_FLAG",
-        0x300D : "DO_FILE_OPERATION_FLAG",
-        0x300E : "GET_ENV_STRINGS_FLAG",
-        0x4000 : "SCREEN_START_CAP_THREAD_FLAG",
-        0x4100 : "SCREEN_CAPTURE_FLAG",
-        0x4101 : "SCREEN_CAPTURE_FRAME_FLAG",
-        0x5000 : "ENUM_RUNNING_PROCS_FLAG",
-        0x5001 : "ENUM_RUNNING_PROC_MODULES_FLAG",
-        0x5002 : "KILL_PROCESS_FLAG",
-        0x6000 : "ENUM_SERVICES_FLAG",
-        0x7002 : "START_SHELL_FLAG",
-        0x7003 : "SHELL_INTERACT_FLAG",
-        0x7100 : "START_TELNET_FLAG",
-        0x7104 : "TELNET_INTERACT_FLAG",
-        0x9000 : "REG_ENUM_KEY_FLAG",
-        0x9001 : "REG_OPEN_KEY_FLAG",
-        0x9002 : "REG_DEL_KEY_FLAG",
-        0x9003 : "REG_CREATE_KEY_FLAG",
-        0x9004 : "REG_ENUM_KEY_VALUE_FLAG",
-        0x9005 : "REG_CREATE_KEY_WITH_VALUE_FLAG",
-        0x9006 : "REG_DEL_VALUE_FLAG",
-        0x9007 : "REG_GET_OR_CREATE_VALUE_FLAG",
-        0xA000 : "NETHOOD_FLAG",
-        0xB000 : "UNKNOWN_FLAG",
-        0xC000 : "SQL_FLAG",
-        0xD000 : "TCPSTATE_FLAG",
-        0xD001 : "UDPSTATE_FLAG",
-        0xD002 : "ADD_TCPSTATE_FLAG",
-        0xE000 : "KEYLOGGER_FLAG",
-    }
-
-    #FLAG_NAME_HERE_FLAG = 0xFLAG
     if flags in the_flags.keys():
-        return "%s %s" % (hex(flags), the_flags[flags])    
-    #elif flags == FLAG_NAME_HERE:
-    #    return "%s (flag_name_here)" % (hex(flags)) 
+        return "%s %s" % (hex(flags), the_flags[flags])
     else:
         return "%s %s" % (hex(flags), "UNKNOWN_FLAG")
 
@@ -164,7 +166,7 @@ def pcap_read_and_extract(i_fname):
             tcp = ip.data
             
             try:
-                #we only care about SYNs
+                #we only care about data
                 if (tcp.flags & 0x18):
                     data = tcp.data
                     output_data.append([
